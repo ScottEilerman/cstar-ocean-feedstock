@@ -1,7 +1,7 @@
 schema_version: 1
 
 context:
-  version: "0.16.1"
+  version: "0.17.0"
   python_min: "3.12"
 
 recipe:
@@ -10,7 +10,7 @@ recipe:
 
 source:
   - url: https://pypi.org/packages/source/c/cstar-ocean/cstar_ocean-${{ version }}.tar.gz
-    sha256: d20782b0c38660210b51fb838fd861034f99132ee246699f495194f11da9c02d
+    sha256: 66f85f59488a313b151a8ca7ce8bc79251a265b6cb6423833d1605646b392610
 
 build:
   number: 0
@@ -59,9 +59,11 @@ outputs:
         - pyyaml >=6.0,<7
         - f90nml >=1.4
         - numpy >2.0,<2.4
-        # >=5.1.1: first roms-tools without the xarray<2025.8 cap, so the solver
-        # can reach xarray 2026.9 (below)
-        - roms-tools >=5.1.1,<6
+        # >=5.2.1: 5.2.0 is the first roms-tools that acts on an ESPER source's
+        # salinity conditioning (5.1.x accepts the key and silently ignores it)
+        # and 5.2.1 adds the nested CDR `domains=` API; all 5.2.x are free of the
+        # old xarray<2025.8 cap, so the solver can reach xarray 2026.9 (below)
+        - roms-tools >=5.2.1,<6
         - typer <=0.25
         # shell detection for `cstar env shell-init`
         - shellingham >=1.3
@@ -119,6 +121,7 @@ outputs:
           - cstar forge --help
           - cstar env register-kernel --help
           - cstar env shell-init --help
+          - cstar run --help
 
     about:
       homepage: https://www.cworthy.org

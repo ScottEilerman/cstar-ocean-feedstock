@@ -1,7 +1,7 @@
 schema_version: 1
 
 context:
-  version: "0.18.0"
+  version: "0.19.0"
   python_min: "3.12"
 
 recipe:
@@ -10,7 +10,7 @@ recipe:
 
 source:
   - url: https://pypi.org/packages/source/c/cstar-ocean/cstar_ocean-${{ version }}.tar.gz
-    sha256: ed8f0147281c51575a4cf6dd6f115f13621ccee8124cff2dc07cfce9428d20cc
+    sha256: 6cfc7c7893b07164379631c006f3119b57e84cbef7e994977c76267a7df3d7d6
 
 build:
   number: 0
@@ -59,12 +59,12 @@ outputs:
         - pyyaml >=6.0,<7
         - f90nml >=1.4
         - numpy >2.0,<2.4
-        # >=5.3.0: CDR metrics sum over interior rho points only, which
-        # `UpscaledCDR`'s closure across nested domains needs, and river forcing
-        # keeps the discharge of rivers that share a cell (5.2.1 added the nested
-        # CDR `domains=` API, 5.2.2 Python 3.14 support); all 5.2+ are free of
-        # the old xarray<2025.8 cap, so the solver can reach xarray 2026.9 (below)
-        - roms-tools >=5.3.0,<6
+        # >=5.4.0: `bottom_fill_blend_m` (Forge and nest_ic), the CONUS404
+        # surface source and the surface-forcing blend; 5.3.0 added the interior-
+        # only CDR metrics `UpscaledCDR` needs, 5.2.2 Python 3.14 support, and
+        # all 5.2+ are free of the old xarray<2025.8 cap, so the solver can reach
+        # xarray 2026.9 (below)
+        - roms-tools >=5.4.0,<6
         - typer <=0.25
         # shell detection for `cstar env shell-init`
         - shellingham >=1.3
@@ -79,12 +79,19 @@ outputs:
         - threadpoolctl
         - numba
         - fsspec
+        # S3 backend for fsspec: Forge streams CONUS404 from its S3 store.
+        # >=2025.1: unfloored, an in-place update can solve to s3fs 0.4.2 (2020)
+        # and downgrade pandas to keep it
+        - s3fs >=2025.1
         - kerchunk
         - ujson
         - fastparquet
         # >=2026.9: pydata/xarray#11622 fixes the netCDF4-backend lock-order
         # deadlock that froze forge input generation mid-save_mfdataset
         - xarray >=2026.9
+        # `cstar run compress` reads and writes netCDF directly; >=1.6 for
+        # netCDF-C's native quantization (`significant_digits`)
+        - netcdf4 >=1.6
         # -- the blueprint wizard (cstar.wizard; `cstar forge wizard` runs it
         #    under voila, `cstar forge copy-notebook` under jupyterlab) --
         - ipywidgets
@@ -123,6 +130,13 @@ outputs:
           - cstar env shell-init --help
           - cstar run --help
           - cstar init --help
+          # the bundled systems are YAML package data from 0.19.0: listing them
+          # proves the sdist carried cstar/catalog/bundled/systems/
+          - cstar system list
+          - cstar run compress --help
+          # the agent skills ship as package data under
+          # cstar/additional_files/skills/ from 0.19.0 (C-Star #912)
+          - cstar skill path cstar-system
 
     about:
       homepage: https://www.cworthy.org
